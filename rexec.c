@@ -30,7 +30,7 @@
 #include "rexec.h"
 
 unsigned int rexec_sysctl_logargs = 1;
-int rexec_sysctl_logall = 1;
+int rexec_sysctl_logall = -1;
 gid_t rexec_sysctl_exec_group = 666;
 uid_t rexec_sysctl_max_bin_uid = 999;
 
@@ -226,10 +226,12 @@ static int mod(struct module *module, int cmd, void *arg) {
 	switch (cmd) {
 		case MOD_LOAD:
 			sysent[SYS_execve] = rexec_execve_sysent;
+                        log(LOG_INFO, "rexec loaded.\n");
 			break;
 
 		case MOD_UNLOAD:
 			sysent[SYS_execve].sy_call = (sy_call_t *)sys_execve;
+                        log(LOG_INFO, "rexec unloaded.\n");
 			break;
 
 		default:
@@ -248,16 +250,16 @@ static moduledata_t rexec_mod = {
 
 DECLARE_MODULE(rexec, rexec_mod, SI_SUB_EXEC, SI_ORDER_MIDDLE);
 
-SYSCTL_NODE(_security, OID_AUTO, rexec, CTLFLAG_RW, 0, "rexec configuration");
+SYSCTL_NODE(_security, OID_AUTO, rexec, CTLFLAG_RD, 0, "rexec configuration");
 
-SYSCTL_UINT(_security_rexec, OID_AUTO, logargs, CTLFLAG_RW,
+SYSCTL_UINT(_security_rexec, OID_AUTO, logargs, CTLFLAG_RD,
 	&rexec_sysctl_logargs, 0, "Log all arguments");
 
-SYSCTL_INT(_security_rexec, OID_AUTO, logall, CTLFLAG_RW,
+SYSCTL_INT(_security_rexec, OID_AUTO, logall, CTLFLAG_RD,
         &rexec_sysctl_logall, 0, "Log all users (incl. root)");
 
-SYSCTL_UINT(_security_rexec, OID_AUTO, exec_group, CTLFLAG_RW,
+SYSCTL_UINT(_security_rexec, OID_AUTO, exec_group, CTLFLAG_RD,
         &rexec_sysctl_exec_group, 0, "Group allowed to exec binaries");
 
-SYSCTL_UINT(_security_rexec, OID_AUTO, max_bin_uid, CTLFLAG_RW,
+SYSCTL_UINT(_security_rexec, OID_AUTO, max_bin_uid, CTLFLAG_RD,
         &rexec_sysctl_max_bin_uid, 0, "Last allowed UID for binaries called by user");
